@@ -1,0 +1,48 @@
+--Taras Voloshchuk
+
+import System.IO
+
+ts1 = declare "x" (Constant 150)
+		(Declare "y" (Constant 200)							-- maly program (ts1)
+			(While (Greater (Variable "x") (Constant 0)		-- do celu testowania
+					)
+					(Assign "x" (Minus (Variable "x")
+										(Constant 1)
+								)
+					)
+					(Assign "y" (Minus (Variable "y")
+										(Constant 1)
+								)
+					)
+			)
+			(Print (Variable "y"))
+		)
+evall			:: Exp -> Index -> M Int
+evall exp index = case exp of
+					Constant n	-> return n
+					Variable x	-> let loc = position x index 
+									in getfrom loc
+					Minus x y	-> do { a <- evall x index ;
+										b <- evall y index ;
+										return (a-b) }
+					Greater x y	-> do { a <- evall x index ;
+										b <- evall y index ;
+										return (if a > b
+												then 1
+												else 0) }
+					Times x y	-> do { a <- evall x index ;
+										b <- evall y index ;
+										return ( a * b)	}
+interpret1 :: Com -> Index -> M()
+interpret1 stmt index = case stmt of
+				Assign name e->let loc = position name index
+								in do { v <-eval1 e index ;
+										write loc v }
+				While e b -> let loop () = do { v <- eval1 e index ;
+												if v==0 then return ()
+												else do {interpret1 b index ;
+														loop ()}}
+				Print e -> do { v <- eval1 e index ;
+								output v }
+output :: Show a => a -> M ()
+output v = StOut (\n -> ((), n, show v))
