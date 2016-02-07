@@ -1,0 +1,1 @@
+Interpreter prostego języka
